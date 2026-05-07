@@ -47,11 +47,14 @@ def test_signal_resolvers_choose_expected_variables():
         coords={"Time": time, "R": [3.0, 4.0]},
     )
     ha1 = xr.Dataset({"Halph(3O)": ("Time", [1.0, 2.0])}, coords={"Time": time})
+    ha2 = xr.Dataset({"3-O(H)": ("Time", [1.0, 2.0])}, coords={"Time": time})
 
     assert [signal.variable for signal in resolve_nbi_signals(nbi)] == ["Port-Through_NB1"]
     assert resolve_density_signal(fir).variable == "ne_bar(3669)"
     assert resolve_te_signal(thomson).variable == "Te"
-    assert [signal.variable for signal in resolve_halpha_signals({"ha1": ha1})] == ["Halph(3O)"]
+    assert [signal.variable for signal in resolve_halpha_signals({"ha1": ha1, "ha2": ha2})] == [
+        "3-O(H)"
+    ]
     assert [signal.variable for signal in resolve_halpha_signals({"ha1": ha1}, mode="all")] == [
         "Halph(3O)"
     ]
@@ -157,7 +160,13 @@ def test_plot_shot_overview_accepts_preloaded_datasets_and_time_window():
             coords={"Time": time, "R": [3.0, 4.0]},
         ),
         "ha1": xr.Dataset({"Halph(3O)": ("Time", [0.1, 0.2, 0.3])}, coords={"Time": time}),
-        "ha2": xr.Dataset({"1-O(H)": ("Time", [0.2, 0.3, 0.4])}, coords={"Time": time}),
+        "ha2": xr.Dataset(
+            {
+                "1-O(H)": ("Time", [0.2, 0.3, 0.4]),
+                "3-O(H)": ("Time", [0.4, 0.5, 0.6]),
+            },
+            coords={"Time": time},
+        ),
     }
 
     fig, axes = plot_shot_overview(
@@ -175,4 +184,4 @@ def test_plot_shot_overview_accepts_preloaded_datasets_and_time_window():
     assert axes[0].get_xlim() == (0.5, 1.5)
     np.testing.assert_allclose(axes[1].lines[0].get_xdata(), [1.0])
     assert len(axes[1].lines) == 1
-    assert axes[3].lines[0].get_label() == "ha1 Halpha(3O)"
+    assert axes[3].lines[0].get_label() == "ha2 3-O(H)"

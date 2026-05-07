@@ -175,13 +175,11 @@ def resolve_halpha_signals(
 
 
 def _resolve_default_halpha(datasets: dict[str, xr.Dataset]) -> list[ResolvedSignal]:
-    ha1 = datasets.get("ha1")
-    name = _first_exact(ha1, ("Halph(3O)", "Halpha(3O)")) if ha1 is not None else None
-    if name is None and ha1 is not None:
-        name = _first_matching(ha1, include=("halph", "halpha"), exclude=("hei", "imp"))
+    ha2 = datasets.get("ha2")
+    name = _first_exact(ha2, ("3-O(H)",)) if ha2 is not None else None
     if name is None:
         return []
-    return [ResolvedSignal(diagnostic="ha1", variable=name, label="ha1 Halpha(3O)")]
+    return [ResolvedSignal(diagnostic="ha2", variable=name, label="ha2 3-O(H)")]
 
 
 def _halpha_names_for_diagnostic(diagnostic: str, dataset: xr.Dataset) -> list[str]:

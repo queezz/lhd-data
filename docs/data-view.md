@@ -62,6 +62,7 @@ Time: shape=(1310,), units=s
 
 signals:
 1-O(H): dims=(Time), shape=(1310,), units=V
+3-O(H): dims=(Time), shape=(1310,), units=V
 ...
 ```
 
@@ -86,7 +87,7 @@ The default overview panels are:
 - stored/radiated power from `wp` and `bolo`
 - NBI powers from `nbpwr_tot_temporal`
 - FIR density with Thomson `Te` on a twin y-axis
-- the default `ha1` 3-O H-alpha signal
+- the default `ha2` `3-O(H)` signal
 
 Use `halpha_mode="all"` when exploring every Balmer channel from `ha1` and
 `ha2`.

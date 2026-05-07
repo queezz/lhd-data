@@ -71,8 +71,8 @@ def plot_shot_overview(
         NBI channel numbers to display. Pass ``None`` to show all resolved NBI
         channels.
     halpha_mode:
-        ``"default"`` plots only the 3-O port H-alpha signal. ``"all"`` plots
-        all resolved Balmer channels.
+        ``"default"`` plots only the ``ha2`` ``3-O(H)`` signal. ``"all"``
+        plots all resolved Balmer channels.
     te_ylim:
         Optional manual y-axis limits for the Thomson ``Te`` twin axis.
     """
