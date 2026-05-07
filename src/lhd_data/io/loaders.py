@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 import subprocess
 from collections.abc import Iterable
 from pathlib import Path
@@ -103,8 +104,9 @@ def _download_with_igetfile(
     igetfile_cmd: str,
 ) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    executable = shutil.which(igetfile_cmd) or igetfile_cmd
     command = [
-        igetfile_cmd,
+        executable,
         "-s",
         str(int(shot)),
         "-m",
@@ -114,7 +116,13 @@ def _download_with_igetfile(
         "-o",
         str(output_path),
     ]
-    completed = subprocess.run(command, capture_output=True, check=False, text=True)
+    try:
+        completed = subprocess.run(command, capture_output=True, check=False, text=True)
+    except FileNotFoundError as exc:
+        raise FileNotFoundError(
+            f"Could not run igetfile command {command!r}. "
+            "On Windows, ensure igetfile.bat is available on PATH or pass igetfile_cmd."
+        ) from exc
 
     if completed.returncode != 0:
         message = completed.stderr.strip() or completed.stdout.strip() or "unknown igetfile error"
