@@ -3,9 +3,11 @@
 from lhd_data.io.cache import (
     CORE_DIAGNOSTICS,
     FIGURE_DIAGNOSTICS,
+    CacheDownloadResult,
     cache_diag,
     cache_from_recipe,
     cache_shots,
+    expand_shots,
     load_cached_diag,
     load_cached_shot,
     read_cache_recipe,
@@ -17,9 +19,11 @@ from lhd_data.io.parsers import parse_eg_file
 __all__ = [
     "CORE_DIAGNOSTICS",
     "FIGURE_DIAGNOSTICS",
+    "CacheDownloadResult",
     "cache_from_recipe",
     "cache_diag",
     "cache_shots",
+    "expand_shots",
     "load_cached_diag",
     "load_cached_shot",
     "load_diag",

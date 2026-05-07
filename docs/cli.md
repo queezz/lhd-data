@@ -34,8 +34,10 @@ Example:
 cache_dir = "local/lhd_data"
 
 shots = [
-    193772,
-    193773,
+    "193772-193819",
+    194001,
+    194010,
+    "194050-194060",
 ]
 
 diags = [
@@ -43,7 +45,18 @@ diags = [
     "fircall",
     "thomson",
 ]
+
+overwrite = false
 ```
+
+`shots` accepts integers and string ranges written as `"start-end"`. The CLI
+expands ranges internally, removes duplicates, and processes the resulting shot
+list in sorted order. Malformed ranges stop before downloading with a clear
+validation error.
+
+Set `overwrite = true` to redownload existing cache files by default. The
+default is `false`, so existing files are reported as `SKIPPED` and left in
+place.
 
 Core diagnostics:
 
@@ -78,11 +91,36 @@ Use `--refresh` to redownload files that already exist:
 lhd-cache local/cache.toml --refresh
 ```
 
+`--refresh` is a one-off command-line override for `overwrite = true`.
+
 Use `--fail-fast` to stop on the first failed diagnostic:
 
 ```powershell
 lhd-cache local/cache.toml --fail-fast
 ```
+
+By default, one failed diagnostic does not stop the batch. The CLI keeps the
+overall progress bar moving and reports each item as `OK`, `SKIPPED`, or
+`FAILED`:
+
+```text
+Downloading:  37%|███████▏            | 72/196
+OK       193772 thomson
+SKIPPED  193773 ha1
+FAILED   193774 fircall: timeout
+```
+
+At the end, `lhd-cache` prints a summary and repeats failed entries clearly:
+
+```text
+Done.
+Succeeded: 120
+Skipped: 70
+Failed: 6
+```
+
+A `failures.txt` file is written in the configured `cache_dir`. It contains the
+failed shot, diagnostic, and error message for each failed item.
 
 ## Load Cached Data
 
