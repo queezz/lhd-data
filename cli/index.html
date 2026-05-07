@@ -557,8 +557,10 @@ python -m pip install -e &quot;.[dev,docs]&quot;
 <pre><code class="language-toml">cache_dir = &quot;local/lhd_data&quot;
 
 shots = [
-    193772,
-    193773,
+    &quot;193772-193819&quot;,
+    194001,
+    194010,
+    &quot;194050-194060&quot;,
 ]
 
 diags = [
@@ -566,7 +568,16 @@ diags = [
     &quot;fircall&quot;,
     &quot;thomson&quot;,
 ]
+
+overwrite = false
 </code></pre>
+<p><code>shots</code> accepts integers and string ranges written as <code>"start-end"</code>. The CLI
+expands ranges internally, removes duplicates, and processes the resulting shot
+list in sorted order. Malformed ranges stop before downloading with a clear
+validation error.</p>
+<p>Set <code>overwrite = true</code> to redownload existing cache files by default. The
+default is <code>false</code>, so existing files are reported as <code>SKIPPED</code> and left in
+place.</p>
 <p>Core diagnostics:</p>
 <ul>
 <li><code>nbpwr_tot_temporal</code>: NBI port-through power</li>
@@ -587,9 +598,26 @@ diags = [
 <p>Use <code>--refresh</code> to redownload files that already exist:</p>
 <pre><code class="language-powershell">lhd-cache local/cache.toml --refresh
 </code></pre>
+<p><code>--refresh</code> is a one-off command-line override for <code>overwrite = true</code>.</p>
 <p>Use <code>--fail-fast</code> to stop on the first failed diagnostic:</p>
 <pre><code class="language-powershell">lhd-cache local/cache.toml --fail-fast
 </code></pre>
+<p>By default, one failed diagnostic does not stop the batch. The CLI keeps the
+overall progress bar moving and reports each item as <code>OK</code>, <code>SKIPPED</code>, or
+<code>FAILED</code>:</p>
+<pre><code class="language-text">Downloading:  37%|███████▏            | 72/196
+OK       193772 thomson
+SKIPPED  193773 ha1
+FAILED   193774 fircall: timeout
+</code></pre>
+<p>At the end, <code>lhd-cache</code> prints a summary and repeats failed entries clearly:</p>
+<pre><code class="language-text">Done.
+Succeeded: 120
+Skipped: 70
+Failed: 6
+</code></pre>
+<p>A <code>failures.txt</code> file is written in the configured <code>cache_dir</code>. It contains the
+failed shot, diagnostic, and error message for each failed item.</p>
 <h2 id="load-cached-data">Load Cached Data<a class="headerlink" href="#load-cached-data" title="Permanent link">&para;</a></h2>
 <pre><code class="language-python">from lhd_data import load_cached_diag, load_cached_shot
 
