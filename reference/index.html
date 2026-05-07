@@ -320,6 +320,50 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#lhd_data.cache_from_recipe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cache_from_recipe
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lhd_data.cache_shots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cache_shots
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lhd_data.load_cached_diag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_cached_diag
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lhd_data.load_cached_shot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_cached_shot
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#lhd_data.load_diag" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -346,6 +390,28 @@
     <span class="md-ellipsis">
       
         plot_shot_summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lhd_data.read_cache_recipe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        read_cache_recipe
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lhd_data.write_cache_recipe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        write_cache_recipe
       
     </span>
   </a>
@@ -398,6 +464,50 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#lhd_data.cache_from_recipe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cache_from_recipe
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lhd_data.cache_shots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cache_shots
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lhd_data.load_cached_diag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_cached_diag
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lhd_data.load_cached_shot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_cached_shot
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#lhd_data.load_diag" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -424,6 +534,28 @@
     <span class="md-ellipsis">
       
         plot_shot_summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lhd_data.read_cache_recipe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        read_cache_recipe
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lhd_data.write_cache_recipe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        write_cache_recipe
       
     </span>
   </a>
@@ -485,6 +617,78 @@
 <div class="doc doc-object doc-function">
 
 
+<h2 id="lhd_data.cache_from_recipe" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">cache_from_recipe</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">refresh</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">continue_on_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">igetfile_cmd</span><span class="o">=</span><span class="s1">&#39;igetfile&#39;</span><span class="p">)</span></code>
+
+<a href="#lhd_data.cache_from_recipe" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Download diagnostics described by a TOML cache recipe.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="lhd_data.cache_shots" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">cache_shots</span><span class="p">(</span><span class="n">shots</span><span class="p">,</span> <span class="n">diagnostics</span><span class="o">=</span><span class="n">CORE_DIAGNOSTICS</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">subshot</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">refresh</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">continue_on_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">igetfile_cmd</span><span class="o">=</span><span class="s1">&#39;igetfile&#39;</span><span class="p">)</span></code>
+
+<a href="#lhd_data.cache_shots" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Download a small matrix of shots and diagnostics into the local cache.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="lhd_data.load_cached_diag" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">load_cached_diag</span><span class="p">(</span><span class="n">diag_name</span><span class="p">,</span> <span class="n">shot</span><span class="p">,</span> <span class="n">subshot</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#lhd_data.load_cached_diag" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Load one cached diagnostic without attempting a network download.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="lhd_data.load_cached_shot" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">load_cached_shot</span><span class="p">(</span><span class="n">shot</span><span class="p">,</span> <span class="n">diagnostics</span><span class="o">=</span><span class="n">CORE_DIAGNOSTICS</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">subshot</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#lhd_data.load_cached_shot" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Load cached diagnostics for one shot into a mapping of xarray datasets.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h2 id="lhd_data.load_diag" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">load_diag</span><span class="p">(</span><span class="n">diag_name</span><span class="p">,</span> <span class="n">shot</span><span class="p">,</span> <span class="n">subshot</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">refresh</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">igetfile_cmd</span><span class="o">=</span><span class="s1">&#39;igetfile&#39;</span><span class="p">)</span></code>
 
@@ -530,6 +734,42 @@
     <div class="doc doc-contents ">
 
         <p>Plot a compact shot summary from pre-loaded diagnostic datasets.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="lhd_data.read_cache_recipe" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">read_cache_recipe</span><span class="p">(</span><span class="n">path</span><span class="p">)</span></code>
+
+<a href="#lhd_data.read_cache_recipe" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Read and validate a TOML cache recipe.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="lhd_data.write_cache_recipe" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">write_cache_recipe</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">DEFAULT_RECIPE_PATH</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="s1">&#39;local/lhd_data&#39;</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="p">(</span><span class="mi">193772</span><span class="p">,</span> <span class="mi">193773</span><span class="p">),</span> <span class="n">diagnostics</span><span class="o">=</span><span class="n">CORE_DIAGNOSTICS</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+<a href="#lhd_data.write_cache_recipe" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Write a small editable TOML recipe and return its path.</p>
 
 
     </div>
