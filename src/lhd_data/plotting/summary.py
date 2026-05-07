@@ -9,6 +9,31 @@ import xarray as xr
 from lhd_data.plotting.style import apply_lhd_style
 
 
+def describe_thomson(dataset: xr.Dataset | None) -> str:
+    """Return a compact description of Thomson coordinates and Te/ne signals."""
+
+    if dataset is None:
+        return "Thomson data was not loaded."
+
+    lines = ["Thomson:", "coordinates:"]
+    for name, coord in dataset.coords.items():
+        lines.append(
+            f"{name}: shape={_format_shape(coord.shape)}, units={_format_units(coord)}"
+        )
+
+    lines.extend(["", "signals:"])
+    for name in ("Te", "n_e"):
+        if name not in dataset:
+            continue
+        data = dataset[name]
+        lines.append(
+            f"{name}: dims={_format_dims(data.dims)}, "
+            f"shape={_format_shape(data.shape)}, units={_format_units(data)}"
+        )
+
+    return "\n".join(lines)
+
+
 def plot_shot_summary(
     datasets: Mapping[str, xr.Dataset],
     *,
@@ -157,3 +182,17 @@ def _add_shot_info(fig, shot_info: Mapping[str, object]) -> None:
     if exp_date is not None:
         fig.text(0.3, 0.91, str(exp_date))
     fig.text(0.5, 0.91, text, fontsize=15)
+
+
+def _format_dims(dims: tuple[object, ...]) -> str:
+    return "(" + ", ".join(str(dim) for dim in dims) + ")"
+
+
+def _format_shape(shape: tuple[int, ...]) -> str:
+    if len(shape) == 1:
+        return f"({shape[0]},)"
+    return "(" + ", ".join(str(item) for item in shape) + ")"
+
+
+def _format_units(data: xr.DataArray) -> str:
+    return str(data.attrs.get("units") or data.attrs.get("Unit") or "")

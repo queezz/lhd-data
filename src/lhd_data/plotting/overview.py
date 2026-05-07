@@ -33,6 +33,8 @@ def plot_shot_overview(
     datasets: Mapping[str, xr.Dataset] | None = None,
     thomson_reduction: str = "central",
     figsize: tuple[float, float] = (9, 9),
+    tmin: float | None = None,
+    tmax: float | None = None,
 ):
     """Plot a compact four-panel overview for one cached LHD shot.
 
@@ -57,6 +59,9 @@ def plot_shot_overview(
         Reduction for profile diagnostics: ``"central"`` or ``"mean"``.
     figsize:
         Matplotlib figure size.
+    tmin, tmax:
+        Optional manual time window in seconds. If omitted, the full cached
+        signal range is shown.
     """
 
     import matplotlib.pyplot as plt
@@ -84,15 +89,22 @@ def plot_shot_overview(
     )
     ax_nbi, ax_density, ax_halpha, ax_te = axes
 
-    _plot_nbi_panel(ax_nbi, loaded.get("nbpwr_tot_temporal"))
+    _plot_nbi_panel(ax_nbi, loaded.get("nbpwr_tot_temporal"), tmin=tmin, tmax=tmax)
     ax_nbi.set_ylabel("P [MW]")
     ax_nbi.set_title(f"LHD shot {int(shot)} overview")
 
     density_signal = resolve_density_signal(loaded.get(density_diag), diagnostic=density_diag)
-    _plot_signal(ax_density, loaded, density_signal, fallback_text="Density data unavailable")
+    _plot_signal(
+        ax_density,
+        loaded,
+        density_signal,
+        fallback_text="Density data unavailable",
+        tmin=tmin,
+        tmax=tmax,
+    )
     ax_density.set_ylabel(r"$n_e$ [$10^{19} m^{-3}$]")
 
-    _plot_halpha_panel(ax_halpha, loaded)
+    _plot_halpha_panel(ax_halpha, loaded, tmin=tmin, tmax=tmax)
     ax_halpha.set_ylabel("Emission")
 
     te_signal = resolve_te_signal(loaded.get(te_diag), diagnostic=te_diag)
@@ -104,16 +116,25 @@ def plot_shot_overview(
             kind=te_signal.kind,
             reduction=thomson_reduction,
         )
-    _plot_signal(ax_te, loaded, te_signal, fallback_text="Temperature data unavailable")
+    _plot_signal(
+        ax_te,
+        loaded,
+        te_signal,
+        fallback_text="Temperature data unavailable",
+        tmin=tmin,
+        tmax=tmax,
+    )
     ax_te.set_ylabel(r"$T_e$ [keV]")
     ax_te.set_xlabel("time [s]")
 
     for label, ax in zip(("(a)", "(b)", "(c)", "(d)"), axes, strict=True):
         _style_overview_axis(ax, label)
 
+    _apply_time_window(axes, tmin=tmin, tmax=tmax)
     fig.lhd_datasets = loaded
     fig.lhd_errors = errors
-    return fig
+    fig.lhd_axes = axes
+    return fig, axes
 
 
 def _required_diagnostics(*, density_diag: str, te_diag: str) -> tuple[str, ...]:
@@ -122,20 +143,46 @@ def _required_diagnostics(*, density_diag: str, te_diag: str) -> tuple[str, ...]
     return tuple(ordered_unique or DEFAULT_OVERVIEW_DIAGNOSTICS)
 
 
-def _plot_nbi_panel(ax, dataset: xr.Dataset | None) -> None:
+def _plot_nbi_panel(
+    ax,
+    dataset: xr.Dataset | None,
+    *,
+    tmin: float | None = None,
+    tmax: float | None = None,
+) -> None:
     plotted = False
     for signal in resolve_nbi_signals(dataset):
-        plotted |= _plot_signal(ax, {"nbpwr_tot_temporal": dataset}, signal)
+        plotted |= _plot_signal(
+            ax,
+            {"nbpwr_tot_temporal": dataset},
+            signal,
+            tmin=tmin,
+            tmax=tmax,
+        )
     if not plotted:
         _add_fallback_text(ax, "NBI data unavailable")
     elif len(ax.lines) > 0:
         ax.legend(loc="upper right", ncols=min(3, len(ax.lines)), fontsize=8)
 
 
-def _plot_halpha_panel(ax, datasets: Mapping[str, xr.Dataset]) -> None:
+def _plot_halpha_panel(
+    ax,
+    datasets: Mapping[str, xr.Dataset],
+    *,
+    tmin: float | None = None,
+    tmax: float | None = None,
+) -> None:
     plotted = False
     for signal in resolve_halpha_signals(dict(datasets)):
-        plotted |= _plot_signal(ax, datasets, signal, linewidth=1.0, alpha=0.85)
+        plotted |= _plot_signal(
+            ax,
+            datasets,
+            signal,
+            linewidth=1.0,
+            alpha=0.85,
+            tmin=tmin,
+            tmax=tmax,
+        )
     if not plotted:
         _add_fallback_text(ax, "Balmer data unavailable")
     elif len(ax.lines) > 0:
@@ -148,6 +195,8 @@ def _plot_signal(
     signal: ResolvedSignal | None,
     *,
     fallback_text: str | None = None,
+    tmin: float | None = None,
+    tmax: float | None = None,
     **plot_kwargs,
 ) -> bool:
     if signal is None:
@@ -163,6 +212,7 @@ def _plot_signal(
 
     data = scale_signal(dataset[signal.variable], signal.kind)
     time, values = reduce_to_time_series(data, method=signal.reduction)
+    time, values = _crop_time_range(time, values, tmin=tmin, tmax=tmax)
     ax.plot(time, values, label=signal.label or signal.variable, **plot_kwargs)
     if fallback_text and len(ax.lines) > 0:
         ax.legend(loc="upper right", fontsize=8)
@@ -178,3 +228,28 @@ def _style_overview_axis(ax, panel_label: str) -> None:
 
 def _add_fallback_text(ax, text: str) -> None:
     ax.text(0.5, 0.5, text, transform=ax.transAxes, ha="center", va="center")
+
+
+def _crop_time_range(
+    time,
+    values,
+    *,
+    tmin: float | None = None,
+    tmax: float | None = None,
+):
+    if tmin is None and tmax is None:
+        return time, values
+
+    mask = time == time
+    if tmin is not None:
+        mask &= time >= tmin
+    if tmax is not None:
+        mask &= time <= tmax
+    return time[mask], values[mask]
+
+
+def _apply_time_window(axes, *, tmin: float | None, tmax: float | None) -> None:
+    if tmin is None and tmax is None:
+        return
+    for ax in axes:
+        ax.set_xlim(left=tmin, right=tmax)

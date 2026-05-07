@@ -9,6 +9,7 @@ from lhd_data.plotting.signals import (
     resolve_nbi_signals,
     resolve_te_signal,
 )
+from lhd_data.plotting.summary import describe_thomson
 
 
 def test_time_axis_seconds_converts_millisecond_units():
@@ -64,30 +65,60 @@ def test_summarize_datasets_is_concise():
     assert "fircall  FAILED" in summary
 
 
-def test_plot_shot_overview_accepts_preloaded_datasets():
+def test_describe_thomson_is_compact():
+    dataset = xr.Dataset(
+        {
+            "Te": (("Time", "R"), [[1.0, 2.0]]),
+            "n_e": (("Time", "R"), [[3.0, 4.0]]),
+        },
+        coords={"Time": [0.0], "R": [3.5, 3.6]},
+    )
+    dataset["Time"].attrs["units"] = "ms"
+    dataset["R"].attrs["units"] = "mm"
+    dataset["Te"].attrs["units"] = "eV"
+    dataset["n_e"].attrs["units"] = "10^16 m^-3"
+
+    description = describe_thomson(dataset)
+
+    assert "Thomson:" in description
+    assert "Time: shape=(1,), units=ms" in description
+    assert "R: shape=(2,), units=mm" in description
+    assert "Te: dims=(Time, R), shape=(1, 2), units=eV" in description
+    assert "n_e: dims=(Time, R), shape=(1, 2), units=10^16 m^-3" in description
+    assert describe_thomson(None) == "Thomson data was not loaded."
+
+
+def test_plot_shot_overview_accepts_preloaded_datasets_and_time_window():
     import matplotlib
 
     matplotlib.use("Agg")
 
-    time = np.array([0.0, 1.0])
+    time = np.array([0.0, 1.0, 2.0])
     datasets = {
         "nbpwr_tot_temporal": xr.Dataset(
-            {"Port-Through_NB1": ("time", [1.0, 2.0])},
+            {"Port-Through_NB1": ("time", [1.0, 2.0, 3.0])},
             coords={"time": time},
         ),
         "fircall": xr.Dataset(
-            {"ne_bar(3669)": ("Time", [0.5, 0.7])},
+            {"ne_bar(3669)": ("Time", [0.5, 0.7, 0.9])},
             coords={"Time": time},
         ),
         "thomson": xr.Dataset(
-            {"Te": (("Time", "R"), [[1000.0, 2000.0], [3000.0, 4000.0]])},
+            {
+                "Te": (
+                    ("Time", "R"),
+                    [[1000.0, 2000.0], [3000.0, 4000.0], [5000.0, 6000.0]],
+                )
+            },
             coords={"Time": time, "R": [3.0, 4.0]},
         ),
-        "ha1": xr.Dataset({"Halph(3O)": ("Time", [0.1, 0.2])}, coords={"Time": time}),
-        "ha2": xr.Dataset({"1-O(H)": ("Time", [0.2, 0.3])}, coords={"Time": time}),
+        "ha1": xr.Dataset({"Halph(3O)": ("Time", [0.1, 0.2, 0.3])}, coords={"Time": time}),
+        "ha2": xr.Dataset({"1-O(H)": ("Time", [0.2, 0.3, 0.4])}, coords={"Time": time}),
     }
 
-    fig = plot_shot_overview(193788, datasets=datasets)
+    fig, axes = plot_shot_overview(193788, datasets=datasets, tmin=0.5, tmax=1.5)
 
     assert len(fig.axes) == 4
-    assert fig.axes[1].get_ylabel() == r"$n_e$ [$10^{19} m^{-3}$]"
+    assert axes[1].get_ylabel() == r"$n_e$ [$10^{19} m^{-3}$]"
+    assert axes[0].get_xlim() == (0.5, 1.5)
+    np.testing.assert_allclose(axes[0].lines[0].get_xdata(), [1.0])
