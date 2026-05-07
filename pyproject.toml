@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lhd-data"
+version = "0.1.0"
+description = "Lightweight xarray-native tools for LHD analyzed data"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Arseniy Kuzmin", email = "you@example.com" }]
+license = { text = "MIT" }
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+dependencies = [
+  "numpy>=1.26",
+  "xarray>=2024.3",
+  "matplotlib>=3.8",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "pytest-cov>=5.0",
+  "ruff>=0.4.0",
+  "black>=24.3.0",
+  "mypy>=1.8.0",
+  "ipython",
+  "ipykernel",
+]
+docs = [
+  "mkdocs>=1.6",
+  "mkdocs-material>=9.5",
+  "mkdocstrings[python]>=0.25",
+  "mkdocs-jupyter>=0.25",
+]
+
+[project.urls]
+Homepage = "https://github.com/your/repo"
+Repository = "https://github.com/your/repo"
+Issues = "https://github.com/your/repo/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+extend-exclude = '''
+/(tools_lhd_v1|tools_lhd_xarray)\.py$
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+lint.select = ["E","F","I","B","UP","W","C90"]
+lint.ignore = ["E203","E266","E501"]
+src = ["src"]
+exclude = ["tools_lhd_v1.py", "tools_lhd_xarray.py"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
