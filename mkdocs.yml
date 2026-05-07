@@ -37,6 +37,7 @@ plugins:
 nav:
   - Home: index.md
   - CLI: cli.md
+  - Data View: data-view.md
   - API: reference.md
 extra_css:
   - styles/brand.css

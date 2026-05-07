@@ -9,7 +9,7 @@ from lhd_data.plotting.signals import (
     resolve_nbi_signals,
     resolve_te_signal,
 )
-from lhd_data.plotting.summary import describe_thomson
+from lhd_data.plotting.summary import describe_halpha, describe_thomson
 
 
 def test_time_axis_seconds_converts_millisecond_units():
@@ -52,6 +52,9 @@ def test_signal_resolvers_choose_expected_variables():
     assert resolve_density_signal(fir).variable == "ne_bar(3669)"
     assert resolve_te_signal(thomson).variable == "Te"
     assert [signal.variable for signal in resolve_halpha_signals({"ha1": ha1})] == ["Halph(3O)"]
+    assert [signal.variable for signal in resolve_halpha_signals({"ha1": ha1}, mode="all")] == [
+        "Halph(3O)"
+    ]
 
 
 def test_summarize_datasets_is_concise():
@@ -88,6 +91,36 @@ def test_describe_thomson_is_compact():
     assert describe_thomson(None) == "Thomson data was not loaded."
 
 
+def test_describe_halpha_lists_ha1_and_ha2_signals():
+    time = np.array([0.0, 1.0])
+    ha1 = xr.Dataset(
+        {
+            "Halph(3O)": ("Time", [1.0, 2.0]),
+            "HeI(3O)": ("Time", [0.1, 0.2]),
+        },
+        coords={"Time": time},
+    )
+    ha2 = xr.Dataset(
+        {
+            "1-O(H)": ("Time", [1.0, 2.0]),
+            "1-O(He)": ("Time", [0.1, 0.2]),
+        },
+        coords={"Time": time},
+    )
+    ha1["Time"].attrs["units"] = "s"
+    ha1["Halph(3O)"].attrs["units"] = "AU"
+    ha2["1-O(H)"].attrs["units"] = "V"
+
+    description = describe_halpha({"ha1": ha1, "ha2": ha2})
+
+    assert "H-alpha:" in description
+    assert "ha1:" in description
+    assert "Halph(3O): dims=(Time), shape=(2,), units=AU" in description
+    assert "ha2:" in description
+    assert "1-O(H): dims=(Time), shape=(2,), units=V" in description
+    assert describe_halpha({}) == "H-alpha data was not loaded."
+
+
 def test_plot_shot_overview_accepts_preloaded_datasets_and_time_window():
     import matplotlib
 
@@ -95,8 +128,19 @@ def test_plot_shot_overview_accepts_preloaded_datasets_and_time_window():
 
     time = np.array([0.0, 1.0, 2.0])
     datasets = {
+        "wp": xr.Dataset(
+            {"Wp": ("Time", [1000.0, 2000.0, 3000.0])},
+            coords={"Time": time},
+        ),
+        "bolo": xr.Dataset(
+            {"Rad_PW": ("Time", [1000.0, 2000.0, 3000.0])},
+            coords={"Time": time},
+        ),
         "nbpwr_tot_temporal": xr.Dataset(
-            {"Port-Through_NB1": ("time", [1.0, 2.0, 3.0])},
+            {
+                "Port-Through_NB1": ("time", [1.0, 2.0, 3.0]),
+                "Port-Through_NB4": ("time", [4.0, 5.0, 6.0]),
+            },
             coords={"time": time},
         ),
         "fircall": xr.Dataset(
@@ -116,9 +160,19 @@ def test_plot_shot_overview_accepts_preloaded_datasets_and_time_window():
         "ha2": xr.Dataset({"1-O(H)": ("Time", [0.2, 0.3, 0.4])}, coords={"Time": time}),
     }
 
-    fig, axes = plot_shot_overview(193788, datasets=datasets, tmin=0.5, tmax=1.5)
+    fig, axes = plot_shot_overview(
+        193788,
+        datasets=datasets,
+        tmin=0.5,
+        tmax=1.5,
+        show_nbi=[1],
+        te_ylim=(0, 3),
+    )
 
-    assert len(fig.axes) == 4
-    assert axes[1].get_ylabel() == r"$n_e$ [$10^{19} m^{-3}$]"
+    assert len(axes) == 4
+    assert len(fig.axes) == 6
+    assert axes[2].get_ylabel() == r"$n_e$ [$10^{19}m^{-3}$]"
     assert axes[0].get_xlim() == (0.5, 1.5)
-    np.testing.assert_allclose(axes[0].lines[0].get_xdata(), [1.0])
+    np.testing.assert_allclose(axes[1].lines[0].get_xdata(), [1.0])
+    assert len(axes[1].lines) == 1
+    assert axes[3].lines[0].get_label() == "ha1 Halpha(3O)"

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from pathlib import Path
 
 import xarray as xr
@@ -18,6 +18,8 @@ from lhd_data.plotting.signals import (
     resolve_density_signal,
     resolve_halpha_signals,
     resolve_nbi_signals,
+    resolve_radiated_power_signal,
+    resolve_stored_power_signal,
     resolve_te_signal,
 )
 from lhd_data.plotting.style import apply_lhd_style
@@ -35,6 +37,9 @@ def plot_shot_overview(
     figsize: tuple[float, float] = (9, 9),
     tmin: float | None = None,
     tmax: float | None = None,
+    show_nbi: Iterable[int] | None = (1, 2, 3),
+    halpha_mode: str = "default",
+    te_ylim: tuple[float, float] | None = None,
 ):
     """Plot a compact four-panel overview for one cached LHD shot.
 
@@ -62,6 +67,14 @@ def plot_shot_overview(
     tmin, tmax:
         Optional manual time window in seconds. If omitted, the full cached
         signal range is shown.
+    show_nbi:
+        NBI channel numbers to display. Pass ``None`` to show all resolved NBI
+        channels.
+    halpha_mode:
+        ``"default"`` plots only the 3-O port H-alpha signal. ``"all"`` plots
+        all resolved Balmer channels.
+    te_ylim:
+        Optional manual y-axis limits for the Thomson ``Te`` twin axis.
     """
 
     import matplotlib.pyplot as plt
@@ -87,11 +100,19 @@ def plot_shot_overview(
         sharex=True,
         constrained_layout=True,
     )
-    ax_nbi, ax_density, ax_halpha, ax_te = axes
+    ax_power, ax_nbi, ax_density, ax_halpha = axes
 
-    _plot_nbi_panel(ax_nbi, loaded.get("nbpwr_tot_temporal"), tmin=tmin, tmax=tmax)
+    _plot_power_panel(ax_power, loaded, tmin=tmin, tmax=tmax)
+    ax_power.set_title(f"LHD shot {int(shot)} overview")
+
+    _plot_nbi_panel(
+        ax_nbi,
+        loaded.get("nbpwr_tot_temporal"),
+        show_nbi=show_nbi,
+        tmin=tmin,
+        tmax=tmax,
+    )
     ax_nbi.set_ylabel("P [MW]")
-    ax_nbi.set_title(f"LHD shot {int(shot)} overview")
 
     density_signal = resolve_density_signal(loaded.get(density_diag), diagnostic=density_diag)
     _plot_signal(
@@ -99,14 +120,13 @@ def plot_shot_overview(
         loaded,
         density_signal,
         fallback_text="Density data unavailable",
+        color="black",
+        linewidth=1.4,
         tmin=tmin,
         tmax=tmax,
     )
-    ax_density.set_ylabel(r"$n_e$ [$10^{19} m^{-3}$]")
-
-    _plot_halpha_panel(ax_halpha, loaded, tmin=tmin, tmax=tmax)
-    ax_halpha.set_ylabel("Emission")
-
+    ax_density.set_ylabel(r"$n_e$ [$10^{19}m^{-3}$]")
+    ax_te = ax_density.twinx()
     te_signal = resolve_te_signal(loaded.get(te_diag), diagnostic=te_diag)
     if te_signal is not None:
         te_signal = ResolvedSignal(
@@ -120,12 +140,22 @@ def plot_shot_overview(
         ax_te,
         loaded,
         te_signal,
-        fallback_text="Temperature data unavailable",
+        color="C3",
+        linestyle="--",
+        linewidth=1.3,
         tmin=tmin,
         tmax=tmax,
     )
     ax_te.set_ylabel(r"$T_e$ [keV]")
-    ax_te.set_xlabel("time [s]")
+    ax_te.yaxis.label.set_color("C3")
+    ax_te.tick_params(axis="y", colors="C3")
+    if te_ylim is not None:
+        ax_te.set_ylim(te_ylim)
+    _add_combined_legend(ax_density, ax_te)
+
+    _plot_halpha_panel(ax_halpha, loaded, mode=halpha_mode, tmin=tmin, tmax=tmax)
+    ax_halpha.set_ylabel("Emission")
+    ax_halpha.set_xlabel("time [s]")
 
     for label, ax in zip(("(a)", "(b)", "(c)", "(d)"), axes, strict=True):
         _style_overview_axis(ax, label)
@@ -138,20 +168,63 @@ def plot_shot_overview(
 
 
 def _required_diagnostics(*, density_diag: str, te_diag: str) -> tuple[str, ...]:
-    diagnostics = ["nbpwr_tot_temporal", density_diag, te_diag, "ha1", "ha2"]
+    diagnostics = ["wp", "bolo", "nbpwr_tot_temporal", density_diag, te_diag, "ha1", "ha2"]
     ordered_unique = list(dict.fromkeys(diagnostics))
     return tuple(ordered_unique or DEFAULT_OVERVIEW_DIAGNOSTICS)
+
+
+def _plot_power_panel(
+    ax,
+    datasets: Mapping[str, xr.Dataset],
+    *,
+    tmin: float | None = None,
+    tmax: float | None = None,
+) -> None:
+    rad_signal = resolve_radiated_power_signal(datasets.get("bolo"))
+    wp_signal = resolve_stored_power_signal(datasets.get("wp"))
+
+    plotted_rad = _plot_signal(
+        ax,
+        datasets,
+        rad_signal,
+        color="C3",
+        linewidth=1.3,
+        tmin=tmin,
+        tmax=tmax,
+    )
+    ax.set_ylabel(r"$P_{rad}$ [MW]")
+
+    ax_wp = ax.twinx()
+    plotted_wp = _plot_signal(
+        ax_wp,
+        datasets,
+        wp_signal,
+        color="C0",
+        linestyle="--",
+        linewidth=1.3,
+        tmin=tmin,
+        tmax=tmax,
+    )
+    ax_wp.set_ylabel(r"$W_p$ [MJ]")
+    ax_wp.yaxis.label.set_color("C0")
+    ax_wp.tick_params(axis="y", colors="C0")
+
+    if not plotted_rad and not plotted_wp:
+        _add_fallback_text(ax, "Stored/radiated power unavailable")
+    else:
+        _add_combined_legend(ax, ax_wp)
 
 
 def _plot_nbi_panel(
     ax,
     dataset: xr.Dataset | None,
     *,
+    show_nbi: Iterable[int] | None = (1, 2, 3),
     tmin: float | None = None,
     tmax: float | None = None,
 ) -> None:
     plotted = False
-    for signal in resolve_nbi_signals(dataset):
+    for signal in resolve_nbi_signals(dataset, show_nbi=show_nbi):
         plotted |= _plot_signal(
             ax,
             {"nbpwr_tot_temporal": dataset},
@@ -169,11 +242,12 @@ def _plot_halpha_panel(
     ax,
     datasets: Mapping[str, xr.Dataset],
     *,
+    mode: str = "default",
     tmin: float | None = None,
     tmax: float | None = None,
 ) -> None:
     plotted = False
-    for signal in resolve_halpha_signals(dict(datasets)):
+    for signal in resolve_halpha_signals(dict(datasets), mode=mode):
         plotted |= _plot_signal(
             ax,
             datasets,
@@ -228,6 +302,13 @@ def _style_overview_axis(ax, panel_label: str) -> None:
 
 def _add_fallback_text(ax, text: str) -> None:
     ax.text(0.5, 0.5, text, transform=ax.transAxes, ha="center", va="center")
+
+
+def _add_combined_legend(ax_left, ax_right) -> None:
+    handles = [*ax_left.lines, *ax_right.lines]
+    labels = [line.get_label() for line in handles]
+    if handles:
+        ax_left.legend(handles, labels, loc="upper right", fontsize=8)
 
 
 def _crop_time_range(

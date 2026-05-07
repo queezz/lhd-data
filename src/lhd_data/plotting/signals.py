@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 import numpy as np
@@ -21,7 +22,11 @@ class ResolvedSignal:
     reduction: str = "central"
 
 
-def resolve_nbi_signals(dataset: xr.Dataset | None) -> list[ResolvedSignal]:
+def resolve_nbi_signals(
+    dataset: xr.Dataset | None,
+    *,
+    show_nbi: Iterable[int] | None = (1, 2, 3),
+) -> list[ResolvedSignal]:
     """Return likely NBI power channels from ``nbpwr_tot_temporal``."""
 
     if dataset is None:
@@ -40,6 +45,10 @@ def resolve_nbi_signals(dataset: xr.Dataset | None) -> list[ResolvedSignal]:
             exclude=("all", "energy", "isgas"),
             max_ndim=1,
         )
+
+    selected = set(show_nbi) if show_nbi is not None else None
+    if selected is not None:
+        names = [name for name in names if _nbi_number(name) in selected]
 
     return [
         ResolvedSignal(
@@ -83,6 +92,32 @@ def resolve_density_signal(
     return ResolvedSignal(diagnostic=diagnostic, variable=name, label=label, kind="density", reduction=reduction)
 
 
+def resolve_stored_power_signal(dataset: xr.Dataset | None) -> ResolvedSignal | None:
+    """Return the stored-energy signal from ``wp``."""
+
+    if dataset is None:
+        return None
+    name = _first_exact(dataset, ("Wp", "wp"))
+    if name is None:
+        name = _first_matching(dataset, include=("wp",), exclude=())
+    if name is None:
+        return None
+    return ResolvedSignal(diagnostic="wp", variable=name, label=r"$W_p$", kind="stored_power")
+
+
+def resolve_radiated_power_signal(dataset: xr.Dataset | None) -> ResolvedSignal | None:
+    """Return the radiated-power signal from ``bolo``."""
+
+    if dataset is None:
+        return None
+    name = _first_exact(dataset, ("Rad_PW", "Prad", "P_rad"))
+    if name is None:
+        name = _first_matching(dataset, include=("rad",), exclude=())
+    if name is None:
+        return None
+    return ResolvedSignal(diagnostic="bolo", variable=name, label=r"$P_{rad}$", kind="radiated_power")
+
+
 def resolve_te_signal(
     dataset: xr.Dataset | None,
     *,
@@ -111,35 +146,56 @@ def resolve_halpha_signals(
     datasets: dict[str, xr.Dataset] | xr.Dataset | None,
     *,
     diagnostics: tuple[str, ...] = ("ha1", "ha2"),
+    mode: str = "default",
 ) -> list[ResolvedSignal]:
     """Return likely Balmer/H-alpha emission channels."""
 
     if datasets is None:
         return []
+    if mode not in {"default", "all"}:
+        raise ValueError(f"halpha_mode must be 'default' or 'all', not {mode!r}")
     if isinstance(datasets, xr.Dataset):
         datasets = {diagnostics[0]: datasets}
+
+    if mode == "default":
+        return _resolve_default_halpha(datasets)
 
     signals: list[ResolvedSignal] = []
     for diagnostic in diagnostics:
         dataset = datasets.get(diagnostic)
         if dataset is None:
             continue
-        if diagnostic == "ha1":
-            names = _rank_variables(dataset, include=("halph", "halpha"), exclude=("hei",), max_ndim=1)
-        else:
-            names = [
-                name
-                for name in dataset.data_vars
-                if "(h)" in name.lower() and "he" not in name.lower() and _is_plottable(dataset[name])
-            ]
-            if not names:
-                names = _rank_variables(dataset, include=("halph", "halpha", "(h)"), exclude=("he",), max_ndim=1)
+        names = _halpha_names_for_diagnostic(diagnostic, dataset)
         signals.extend(
             ResolvedSignal(diagnostic=diagnostic, variable=name, label=f"{diagnostic} {name}")
             for name in names
         )
 
     return signals
+
+
+def _resolve_default_halpha(datasets: dict[str, xr.Dataset]) -> list[ResolvedSignal]:
+    ha1 = datasets.get("ha1")
+    name = _first_exact(ha1, ("Halph(3O)", "Halpha(3O)")) if ha1 is not None else None
+    if name is None and ha1 is not None:
+        name = _first_matching(ha1, include=("halph", "halpha"), exclude=("hei", "imp"))
+    if name is None:
+        return []
+    return [ResolvedSignal(diagnostic="ha1", variable=name, label="ha1 Halpha(3O)")]
+
+
+def _halpha_names_for_diagnostic(diagnostic: str, dataset: xr.Dataset) -> list[str]:
+    if diagnostic == "ha1":
+        return _rank_variables(dataset, include=("halph", "halpha"), exclude=("hei",), max_ndim=1)
+
+    names = [
+        name
+        for name in dataset.data_vars
+        if "(h)" in name.lower() and "he" not in name.lower() and _is_plottable(dataset[name])
+    ]
+    if names:
+        return names
+    return _rank_variables(dataset, include=("halph", "halpha", "(h)"), exclude=("he",), max_ndim=1)
 
 
 def _rank_variables(
@@ -185,6 +241,15 @@ def _first_matching(
 ) -> str | None:
     matches = _rank_variables(dataset, include=include, exclude=exclude)
     return matches[0] if matches else None
+
+
+def _nbi_number(name: str) -> int | None:
+    lowered = name.lower()
+    if "nb" not in lowered:
+        return None
+    suffix = lowered.rsplit("nb", 1)[-1]
+    digits = "".join(char for char in suffix if char.isdigit())
+    return int(digits) if digits else None
 
 
 def _is_plottable(data: xr.DataArray, *, max_ndim: int | None = None) -> bool:

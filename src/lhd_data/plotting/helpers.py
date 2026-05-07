@@ -11,6 +11,8 @@ import xarray as xr
 from lhd_data.io.cache import load_cached_diag
 
 DEFAULT_OVERVIEW_DIAGNOSTICS = (
+    "wp",
+    "bolo",
     "nbpwr_tot_temporal",
     "fircall",
     "thomson",
@@ -191,6 +193,8 @@ def scale_signal(data: xr.DataArray, kind: str | None) -> xr.DataArray:
     if kind == "temperature" and "ev" in units and "kev" not in units:
         return data / 1000.0
     if kind == "density" and "10^16" in units:
+        return data / 1000.0
+    if kind in {"stored_power", "radiated_power"} and units in {"kw", "kj"}:
         return data / 1000.0
     return data
 

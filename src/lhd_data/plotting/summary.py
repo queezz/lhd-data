@@ -34,6 +34,40 @@ def describe_thomson(dataset: xr.Dataset | None) -> str:
     return "\n".join(lines)
 
 
+def describe_halpha(datasets: Mapping[str, xr.Dataset] | None) -> str:
+    """Return compact coordinate and signal information for ``ha1`` and ``ha2``."""
+
+    if datasets is None:
+        return "H-alpha data was not loaded."
+
+    lines = ["H-alpha:"]
+    found = False
+    for diagnostic in ("ha1", "ha2"):
+        dataset = datasets.get(diagnostic)
+        if dataset is None:
+            lines.extend(["", f"{diagnostic}: not loaded"])
+            continue
+
+        found = True
+        lines.extend(["", f"{diagnostic}:", "coordinates:"])
+        for name, coord in dataset.coords.items():
+            lines.append(
+                f"{name}: shape={_format_shape(coord.shape)}, units={_format_units(coord)}"
+            )
+
+        lines.append("")
+        lines.append("signals:")
+        for name, data in dataset.data_vars.items():
+            lines.append(
+                f"{name}: dims={_format_dims(data.dims)}, "
+                f"shape={_format_shape(data.shape)}, units={_format_units(data)}"
+            )
+
+    if not found:
+        return "H-alpha data was not loaded."
+    return "\n".join(lines)
+
+
 def plot_shot_summary(
     datasets: Mapping[str, xr.Dataset],
     *,
