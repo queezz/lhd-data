@@ -31,39 +31,86 @@ are collected in `failed` instead of stopping the notebook.
 
 ## Inspect Diagnostic Shapes
 
-Use compact describers for diagnostics whose variable names and dimensions are
-easy to forget.
+Use compact describers for diagnostics whose variable names, dimensions, and
+units are easy to forget. These helpers are generic xarray introspection tools,
+not plotting utilities.
 
 ```python
-from lhd_data.plotting.summary import describe_halpha, describe_thomson
+from lhd_data.describe import describe_dataarray, describe_dataset, describe_many
+```
 
-print(describe_thomson(datasets.get("thomson")))
-print(describe_halpha(datasets))
+Inspect one dataset:
+
+```python
+print(describe_dataset(datasets["thomson"]))
+```
+
+Inspect a small group of named datasets:
+
+```python
+print(describe_many({name: datasets[name] for name in ("ha1", "ha2") if name in datasets}))
+```
+
+Inspect one signal:
+
+```python
+print(describe_dataarray(datasets["ha2"]["3-O(H)"]))
+```
+
+Typical Thomson output:
+
+```text
+thomson
+-------
+coordinates:
+  Time: shape=(389,), units=ms
+  R: shape=(140,), units=mm
+
+dimensions:
+  Time: 389
+  R: 140
+
+signals:
+  Te: dims=(Time, R), shape=(389, 140), units=eV
+  n_e: dims=(Time, R), shape=(389, 140), units=10^16 m^-3
+  ...
 ```
 
 Typical H-alpha output:
 
 ```text
-H-alpha:
-
-ha1:
+ha1
+---
 coordinates:
-Time: shape=(12001,), units=s
+  Time: shape=(12001,), units=s
+
+dimensions:
+  Time: 12001
 
 signals:
-Halph(3O): dims=(Time), shape=(12001,), units=AU
-HeI(3O): dims=(Time), shape=(12001,), units=AU
-Halph(ImpMon): dims=(Time), shape=(12001,), units=AU
-HeI(Impmon): dims=(Time), shape=(12001,), units=AU
+  Halph(3O): dims=(Time), shape=(12001,), units=AU
+  HeI(3O): dims=(Time), shape=(12001,), units=AU
+  Halph(ImpMon): dims=(Time), shape=(12001,), units=AU
+  HeI(Impmon): dims=(Time), shape=(12001,), units=AU
 
-ha2:
+ha2
+---
 coordinates:
-Time: shape=(1310,), units=s
+  Time: shape=(1310,), units=s
+
+dimensions:
+  Time: 1310
 
 signals:
-1-O(H): dims=(Time), shape=(1310,), units=V
+  1-O(H): dims=(Time), shape=(1310,), units=V
+  3-O(H): dims=(Time), shape=(1310,), units=V
+  ...
+```
+
+Typical single-signal output:
+
+```text
 3-O(H): dims=(Time), shape=(1310,), units=V
-...
 ```
 
 ## Plot A Quick Overview
@@ -96,8 +143,13 @@ Use `halpha_mode="all"` when exploring every Balmer channel from `ha1` and
 
 - `load_cached_diagnostics(...)`: best-effort cached diagnostic loader.
 - `summarize_datasets(...)`: compact loaded/missing diagnostic summary.
-- `describe_thomson(...)`: coordinates plus `Te` and `n_e` shapes/units.
-- `describe_halpha(...)`: coordinates plus all `ha1`/`ha2` signal names,
-  shapes, and units.
+- `describe_dataset(...)`: coordinates, dimensions, and signal names for one
+  `xarray.Dataset`.
+- `describe_dataarray(...)`: one compact signal/coordinate description line.
+- `describe_many(...)`: repeated `describe_dataset(...)` output for a mapping of
+  named datasets such as `{"ha1": ds1, "ha2": ds2}`.
 - `plot_shot_overview(...)`: reusable four-panel quick-look plot for notebooks
   and batch scripts.
+
+See `examples/diag_details.ipynb` for a notebook version of these inspection
+patterns.
