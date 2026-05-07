@@ -53,15 +53,40 @@ The Ishihara notebooks use these diagnostics:
 - Full `Figure1.ipynb` / `Figure2.ipynb` reproduction also needs: `wp`,
   `bolo`, `ha1`, `ha2`, `ha3`
 
-Download the current working shot range into the `.gitignored` local cache:
+Create a local TOML recipe:
 
 ```powershell
 & "$env:USERPROFILE/.venvs/lhd-data/Scripts/Activate.ps1"
-python scripts/cache_lhd_data.py
+lhd-cache-init
 ```
 
-Use `--figures` to cache every diagnostic needed by the existing figure
-notebooks. Files are stored as `local/lhd_data/<shot>/<diag>_<subshot>.dat`.
+This writes `local/cache.toml`, which is safe to edit because `local/` is
+`.gitignored`.
+
+Example recipe:
+
+```toml
+cache_dir = "local/lhd_data"
+
+shots = [
+    193772,
+    193773,
+]
+
+diags = [
+    "nbpwr_tot_temporal",
+    "fircall",
+    "thomson",
+]
+```
+
+Run the recipe:
+
+```powershell
+lhd-cache local/cache.toml
+```
+
+Files are stored as `local/lhd_data/<shot>/<diag>_<subshot>.dat`.
 
 Cached datasets can be loaded without network access:
 
@@ -86,4 +111,36 @@ python -m pip install -e ".[dev,docs]"
 ```powershell
 & "$env:USERPROFILE/.venvs/lhd-data/Scripts/Activate.ps1"
 mkdocs serve --livereload
+```
+
+---
+
+## VENV
+
+### Create virtual environment
+
+Linux / macOS:
+
+```bash
+python3 -m venv ~/.venvs/lhd-data
+```
+
+Windows PowerShell:
+
+```powershell
+python -m venv "$env:USERPROFILE/.venvs/lhd-data"
+```
+
+### Activate virtual environment
+
+Linux / macOS:
+
+```bash
+source ~/.venvs/lhd-data/bin/activate
+```
+
+Windows PowerShell:
+
+```powershell
+& "$env:USERPROFILE/.venvs/lhd-data/Scripts/Activate.ps1"
 ```

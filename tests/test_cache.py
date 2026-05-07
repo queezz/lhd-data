@@ -1,4 +1,10 @@
-from lhd_data.io.cache import CORE_DIAGNOSTICS, load_cached_diag
+from lhd_data.io.cache import (
+    CORE_DIAGNOSTICS,
+    init_cache_cli,
+    load_cached_diag,
+    read_cache_recipe,
+    write_cache_recipe,
+)
 from lhd_data.utils.paths import diagnostic_cache_path
 
 
@@ -21,3 +27,31 @@ def test_load_cached_diag_raises_for_missing_file(tmp_path):
         assert str(missing) in str(exc)
     else:
         raise AssertionError("Expected FileNotFoundError")
+
+
+def test_write_and_read_cache_recipe(tmp_path):
+    recipe_path = tmp_path / "cache.toml"
+
+    write_cache_recipe(
+        recipe_path,
+        cache_dir="local/test_cache",
+        shots=(193772, 193773),
+        diagnostics=("fircall", "thomson"),
+    )
+    recipe = read_cache_recipe(recipe_path)
+
+    assert recipe == {
+        "cache_dir": "local/test_cache",
+        "shots": [193772, 193773],
+        "diags": ["fircall", "thomson"],
+        "subshot": 1,
+    }
+
+
+def test_init_cache_cli_writes_recipe(tmp_path):
+    recipe_path = tmp_path / "local" / "cache.toml"
+
+    exit_code = init_cache_cli([str(recipe_path)])
+
+    assert exit_code == 0
+    assert read_cache_recipe(recipe_path)["diags"] == list(CORE_DIAGNOSTICS)

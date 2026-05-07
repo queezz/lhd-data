@@ -19,7 +19,12 @@ dependencies = [
   "numpy>=1.26",
   "xarray>=2024.3",
   "matplotlib>=3.8",
+  "tomli>=2.0; python_version<'3.11'",
 ]
+
+[project.scripts]
+lhd-cache = "lhd_data.io.cache:cache_cli"
+lhd-cache-init = "lhd_data.io.cache:init_cache_cli"
 
 [project.optional-dependencies]
 dev = [
