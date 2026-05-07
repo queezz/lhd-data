@@ -1,0 +1,19 @@
+.red { color: #ff5252; }
+.green { color: #69f0ae; }
+.gray { color: #9e9e9e; }
+
+.molecule-block {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 1.5rem;
+    align-items: start;
+    margin: 1rem 0;
+}
+
+.molecule-viewer {
+    position: relative;
+    width: 340px;
+    height: 220px;
+    border-radius: 6px;
+    overflow: hidden;
+}
