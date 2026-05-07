@@ -5,8 +5,19 @@ theme:
   name: material
   favicon: assets/favicon.svg
   logo: assets/favicon.svg
-  pallete:
+  palette:
     - scheme: bh-dark
+      primary: custom
+      accent: yellow
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+    - scheme: default
+      primary: amber
+      accent: red
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
   features:
     - navigation.instant
     - navigation.tracking
