@@ -12,6 +12,7 @@ from lhd_data.io.cache import (
     write_cache_recipe,
 )
 from lhd_data.io.loaders import load_diag, load_summary_set
+from lhd_data.plotting.overview import plot_shot_overview
 from lhd_data.plotting.summary import plot_shot_summary
 
 __all__ = [
@@ -24,6 +25,7 @@ __all__ = [
     "load_cached_shot",
     "load_diag",
     "load_summary_set",
+    "plot_shot_overview",
     "plot_shot_summary",
     "read_cache_recipe",
     "write_cache_recipe",
