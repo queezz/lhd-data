@@ -97,22 +97,6 @@ ds = load_cached_diag("thomson", 193772)
 shot_data = load_cached_shot(193772)
 ```
 
-## Install
-
-Activate the project virtual environment first on Windows PowerShell:
-
-```powershell
-& "$env:USERPROFILE/.venvs/lhd-data/Scripts/Activate.ps1"
-python -m pip install -e ".[dev,docs]"
-```
-
-## Serve docs
-
-```powershell
-& "$env:USERPROFILE/.venvs/lhd-data/Scripts/Activate.ps1"
-mkdocs serve --livereload
-```
-
 ---
 
 ## VENV
