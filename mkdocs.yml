@@ -5,6 +5,8 @@ theme:
   name: material
   favicon: assets/favicon.svg
   logo: assets/favicon.svg
+  pallete:
+    - scheme: bh-dark
   features:
     - navigation.instant
     - navigation.tracking
