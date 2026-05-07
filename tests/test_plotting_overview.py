@@ -1,6 +1,7 @@
 import numpy as np
 import xarray as xr
 
+from lhd_data.describe import describe_dataarray, describe_dataset, describe_many
 from lhd_data.plotting.helpers import reduce_to_time_series, summarize_datasets, time_axis_seconds
 from lhd_data.plotting.overview import plot_shot_overview
 from lhd_data.plotting.signals import (
@@ -9,7 +10,6 @@ from lhd_data.plotting.signals import (
     resolve_nbi_signals,
     resolve_te_signal,
 )
-from lhd_data.plotting.summary import describe_halpha, describe_thomson
 
 
 def test_time_axis_seconds_converts_millisecond_units():
@@ -71,7 +71,7 @@ def test_summarize_datasets_is_concise():
     assert "fircall  FAILED" in summary
 
 
-def test_describe_thomson_is_compact():
+def test_describe_dataset_is_compact_and_generic():
     dataset = xr.Dataset(
         {
             "Te": (("Time", "R"), [[1.0, 2.0]]),
@@ -83,18 +83,27 @@ def test_describe_thomson_is_compact():
     dataset["R"].attrs["units"] = "mm"
     dataset["Te"].attrs["units"] = "eV"
     dataset["n_e"].attrs["units"] = "10^16 m^-3"
+    dataset.attrs["diagnostic"] = "thomson"
 
-    description = describe_thomson(dataset)
+    description = describe_dataset(dataset)
 
-    assert "Thomson:" in description
+    assert "thomson\n-------" in description
     assert "Time: shape=(1,), units=ms" in description
     assert "R: shape=(2,), units=mm" in description
+    assert "Time: 1" in description
+    assert "R: 2" in description
     assert "Te: dims=(Time, R), shape=(1, 2), units=eV" in description
     assert "n_e: dims=(Time, R), shape=(1, 2), units=10^16 m^-3" in description
-    assert describe_thomson(None) == "Thomson data was not loaded."
 
 
-def test_describe_halpha_lists_ha1_and_ha2_signals():
+def test_describe_dataarray_is_one_signal_line():
+    data = xr.DataArray([1.0, 2.0], dims=("Time",), name="Halph(3O)")
+    data.attrs["units"] = "AU"
+
+    assert describe_dataarray(data) == "Halph(3O): dims=(Time), shape=(2,), units=AU"
+
+
+def test_describe_many_lists_named_datasets():
     time = np.array([0.0, 1.0])
     ha1 = xr.Dataset(
         {
@@ -114,14 +123,13 @@ def test_describe_halpha_lists_ha1_and_ha2_signals():
     ha1["Halph(3O)"].attrs["units"] = "AU"
     ha2["1-O(H)"].attrs["units"] = "V"
 
-    description = describe_halpha({"ha1": ha1, "ha2": ha2})
+    description = describe_many({"ha1": ha1, "ha2": ha2})
 
-    assert "H-alpha:" in description
-    assert "ha1:" in description
+    assert "ha1\n---" in description
     assert "Halph(3O): dims=(Time), shape=(2,), units=AU" in description
-    assert "ha2:" in description
+    assert "ha2\n---" in description
     assert "1-O(H): dims=(Time), shape=(2,), units=V" in description
-    assert describe_halpha({}) == "H-alpha data was not loaded."
+    assert describe_many({}) == "No datasets loaded."
 
 
 def test_plot_shot_overview_accepts_preloaded_datasets_and_time_window():

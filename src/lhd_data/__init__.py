@@ -1,6 +1,7 @@
 """Lightweight xarray-native access to LHD analyzed data."""
 
 from lhd_data._version import __version__
+from lhd_data.describe import describe_dataarray, describe_dataset, describe_many
 from lhd_data.io.cache import (
     CacheDownloadResult,
     cache_from_recipe,
@@ -20,6 +21,9 @@ __all__ = [
     "CacheDownloadResult",
     "cache_from_recipe",
     "cache_shots",
+    "describe_dataarray",
+    "describe_dataset",
+    "describe_many",
     "expand_shots",
     "load_cached_diag",
     "load_cached_shot",
