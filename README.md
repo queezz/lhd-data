@@ -45,6 +45,33 @@ coordinates and variables.
 Downloaded files are cached under `local/lhd_data` by default. Set
 `LHD_DATA_CACHE` or pass `cache_dir=` to choose another location.
 
+## Bulk Local Cache
+
+The Ishihara notebooks use these diagnostics:
+
+- Core NBI/ne/Te workflow: `nbpwr_tot_temporal`, `fircall`, `thomson`
+- Full `Figure1.ipynb` / `Figure2.ipynb` reproduction also needs: `wp`,
+  `bolo`, `ha1`, `ha2`, `ha3`
+
+Download the current working shot range into the `.gitignored` local cache:
+
+```powershell
+& "$env:USERPROFILE/.venvs/lhd-data/Scripts/Activate.ps1"
+python scripts/cache_lhd_data.py
+```
+
+Use `--figures` to cache every diagnostic needed by the existing figure
+notebooks. Files are stored as `local/lhd_data/<shot>/<diag>_<subshot>.dat`.
+
+Cached datasets can be loaded without network access:
+
+```python
+from lhd_data import load_cached_diag, load_cached_shot
+
+ds = load_cached_diag("thomson", 193772)
+shot_data = load_cached_shot(193772)
+```
+
 ## Install
 
 Activate the project virtual environment first on Windows PowerShell:

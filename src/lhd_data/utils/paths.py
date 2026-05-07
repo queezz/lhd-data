@@ -31,4 +31,6 @@ def diagnostic_cache_path(
     """Build the stable local filename for one downloaded diagnostic."""
 
     safe_diag_name = diag_name.replace("/", "_").replace("\\", "_")
-    return get_cache_dir(cache_dir) / safe_diag_name / f"{int(shot):06d}_{int(subshot):06d}.dat"
+    return (
+        get_cache_dir(cache_dir) / f"{int(shot):06d}" / f"{safe_diag_name}_{int(subshot):06d}.dat"
+    )
