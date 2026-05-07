@@ -1,5 +1,5 @@
 site_name: LHD Data
-repo_url: https://github.com/your/repo
+repo_url: https://github.com/queezz/lhd-data
 strict: true
 theme:
   name: material
