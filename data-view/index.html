@@ -568,33 +568,66 @@ print(summarize_datasets(datasets, failed, diagnostics=DEFAULT_OVERVIEW_DIAGNOST
 <p><code>load_cached_diagnostics</code> only reads existing cache files. Missing diagnostics
 are collected in <code>failed</code> instead of stopping the notebook.</p>
 <h2 id="inspect-diagnostic-shapes">Inspect Diagnostic Shapes<a class="headerlink" href="#inspect-diagnostic-shapes" title="Permanent link">&para;</a></h2>
-<p>Use compact describers for diagnostics whose variable names and dimensions are
-easy to forget.</p>
-<pre><code class="language-python">from lhd_data.plotting.summary import describe_halpha, describe_thomson
+<p>Use compact describers for diagnostics whose variable names, dimensions, and
+units are easy to forget. These helpers are generic xarray introspection tools,
+not plotting utilities.</p>
+<pre><code class="language-python">from lhd_data.describe import describe_dataarray, describe_dataset, describe_many
+</code></pre>
+<p>Inspect one dataset:</p>
+<pre><code class="language-python">print(describe_dataset(datasets[&quot;thomson&quot;]))
+</code></pre>
+<p>Inspect a small group of named datasets:</p>
+<pre><code class="language-python">print(describe_many({name: datasets[name] for name in (&quot;ha1&quot;, &quot;ha2&quot;) if name in datasets}))
+</code></pre>
+<p>Inspect one signal:</p>
+<pre><code class="language-python">print(describe_dataarray(datasets[&quot;ha2&quot;][&quot;3-O(H)&quot;]))
+</code></pre>
+<p>Typical Thomson output:</p>
+<pre><code class="language-text">thomson
+-------
+coordinates:
+  Time: shape=(389,), units=ms
+  R: shape=(140,), units=mm
 
-print(describe_thomson(datasets.get(&quot;thomson&quot;)))
-print(describe_halpha(datasets))
+dimensions:
+  Time: 389
+  R: 140
+
+signals:
+  Te: dims=(Time, R), shape=(389, 140), units=eV
+  n_e: dims=(Time, R), shape=(389, 140), units=10^16 m^-3
+  ...
 </code></pre>
 <p>Typical H-alpha output:</p>
-<pre><code class="language-text">H-alpha:
-
-ha1:
+<pre><code class="language-text">ha1
+---
 coordinates:
-Time: shape=(12001,), units=s
+  Time: shape=(12001,), units=s
+
+dimensions:
+  Time: 12001
 
 signals:
-Halph(3O): dims=(Time), shape=(12001,), units=AU
-HeI(3O): dims=(Time), shape=(12001,), units=AU
-Halph(ImpMon): dims=(Time), shape=(12001,), units=AU
-HeI(Impmon): dims=(Time), shape=(12001,), units=AU
+  Halph(3O): dims=(Time), shape=(12001,), units=AU
+  HeI(3O): dims=(Time), shape=(12001,), units=AU
+  Halph(ImpMon): dims=(Time), shape=(12001,), units=AU
+  HeI(Impmon): dims=(Time), shape=(12001,), units=AU
 
-ha2:
+ha2
+---
 coordinates:
-Time: shape=(1310,), units=s
+  Time: shape=(1310,), units=s
+
+dimensions:
+  Time: 1310
 
 signals:
-1-O(H): dims=(Time), shape=(1310,), units=V
-...
+  1-O(H): dims=(Time), shape=(1310,), units=V
+  3-O(H): dims=(Time), shape=(1310,), units=V
+  ...
+</code></pre>
+<p>Typical single-signal output:</p>
+<pre><code class="language-text">3-O(H): dims=(Time), shape=(1310,), units=V
 </code></pre>
 <h2 id="plot-a-quick-overview">Plot A Quick Overview<a class="headerlink" href="#plot-a-quick-overview" title="Permanent link">&para;</a></h2>
 <pre><code class="language-python">from lhd_data.plotting.overview import plot_shot_overview
@@ -614,7 +647,7 @@ fig, axes = plot_shot_overview(
 <li>stored/radiated power from <code>wp</code> and <code>bolo</code></li>
 <li>NBI powers from <code>nbpwr_tot_temporal</code></li>
 <li>FIR density with Thomson <code>Te</code> on a twin y-axis</li>
-<li>the default <code>ha1</code> 3-O H-alpha signal</li>
+<li>the default <code>ha2</code> <code>3-O(H)</code> signal</li>
 </ul>
 <p>Use <code>halpha_mode="all"</code> when exploring every Balmer channel from <code>ha1</code> and
 <code>ha2</code>.</p>
@@ -622,12 +655,16 @@ fig, axes = plot_shot_overview(
 <ul>
 <li><code>load_cached_diagnostics(...)</code>: best-effort cached diagnostic loader.</li>
 <li><code>summarize_datasets(...)</code>: compact loaded/missing diagnostic summary.</li>
-<li><code>describe_thomson(...)</code>: coordinates plus <code>Te</code> and <code>n_e</code> shapes/units.</li>
-<li><code>describe_halpha(...)</code>: coordinates plus all <code>ha1</code>/<code>ha2</code> signal names,
-  shapes, and units.</li>
+<li><code>describe_dataset(...)</code>: coordinates, dimensions, and signal names for one
+  <code>xarray.Dataset</code>.</li>
+<li><code>describe_dataarray(...)</code>: one compact signal/coordinate description line.</li>
+<li><code>describe_many(...)</code>: repeated <code>describe_dataset(...)</code> output for a mapping of
+  named datasets such as <code>{"ha1": ds1, "ha2": ds2}</code>.</li>
 <li><code>plot_shot_overview(...)</code>: reusable four-panel quick-look plot for notebooks
   and batch scripts.</li>
 </ul>
+<p>See <code>examples/diag_details.ipynb</code> for a notebook version of these inspection
+patterns.</p>
 
 
 
