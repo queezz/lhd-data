@@ -23,6 +23,7 @@ plugins:
   - mkdocs-jupyter
 nav:
   - Home: index.md
+  - CLI: cli.md
   - API: reference.md
 extra_css:
   - styles/brand.css
