@@ -9,7 +9,7 @@
       
       
       
-        <link rel="prev" href="../cli/">
+        <link rel="prev" href="../data-view/">
       
       
       
@@ -309,6 +309,33 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-view/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data View
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -467,6 +494,34 @@
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lhd_data.plot_shot_overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        plot_shot_overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="plot_shot_overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lhd_data.plot_shot_overview--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -633,6 +688,34 @@
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lhd_data.plot_shot_overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        plot_shot_overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="plot_shot_overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lhd_data.plot_shot_overview--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -891,6 +974,55 @@
     <div class="doc doc-contents ">
 
         <p>Load the standard shot-summary diagnostics as a mapping of datasets.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="lhd_data.plot_shot_overview" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">plot_shot_overview</span><span class="p">(</span><span class="n">shot</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">density_diag</span><span class="o">=</span><span class="s1">&#39;fircall&#39;</span><span class="p">,</span> <span class="n">te_diag</span><span class="o">=</span><span class="s1">&#39;thomson&#39;</span><span class="p">,</span> <span class="n">subshot</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">datasets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">thomson_reduction</span><span class="o">=</span><span class="s1">&#39;central&#39;</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span> <span class="n">tmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">show_nbi</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">halpha_mode</span><span class="o">=</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">te_ylim</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#lhd_data.plot_shot_overview" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Plot a compact four-panel overview for one cached LHD shot.</p>
+<h4 id="lhd_data.plot_shot_overview--parameters">Parameters<a class="headerlink" href="#lhd_data.plot_shot_overview--parameters" title="Permanent link">&para;</a></h4>
+<p>shot:
+    Shot number to load and display.
+cache_dir:
+    Local cache directory. Only cached files are read; this function does
+    not call download-capable loaders.
+density_diag:
+    Density source diagnostic. Defaults to <code>"fircall"</code> for smoother,
+    higher-time-resolution discharge browsing.
+te_diag:
+    Electron-temperature source diagnostic. Defaults to <code>"thomson"</code>.
+subshot:
+    Cache subshot number.
+datasets:
+    Optional pre-loaded datasets. Missing required diagnostics are loaded
+    from <code>cache_dir</code>.
+thomson_reduction:
+    Reduction for profile diagnostics: <code>"central"</code> or <code>"mean"</code>.
+figsize:
+    Matplotlib figure size.
+tmin, tmax:
+    Optional manual time window in seconds. If omitted, the full cached
+    signal range is shown.
+show_nbi:
+    NBI channel numbers to display. Pass <code>None</code> to show all resolved NBI
+    channels.
+halpha_mode:
+    <code>"default"</code> plots only the 3-O port H-alpha signal. <code>"all"</code> plots
+    all resolved Balmer channels.
+te_ylim:
+    Optional manual y-axis limits for the Thomson <code>Te</code> twin axis.</p>
 
 
     </div>
