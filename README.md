@@ -97,6 +97,20 @@ ds = load_cached_diag("thomson", 193772)
 shot_data = load_cached_shot(193772)
 ```
 
+Create a compact fundamental-diagnostics map from cached shots:
+
+```python
+from lhd_data.plotting import plot_fundamental_map
+
+fig, axes = plot_fundamental_map(
+    range(193772, 193820),
+    cache_dir="local/lhd_data",
+    columns=7,
+    tmin=3.2,
+    tmax=9.0,
+)
+```
+
 ---
 
 ## VENV

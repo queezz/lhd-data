@@ -3,6 +3,8 @@ import xarray as xr
 
 from lhd_data.describe import describe_dataarray, describe_dataset, describe_many
 from lhd_data.plotting.helpers import reduce_to_time_series, summarize_datasets, time_axis_seconds
+from lhd_data.plotting.fundamental_map import FundamentalSignalSpec, plot_fundamental_map
+from lhd_data.plotting.grid import shot_grid_shape
 from lhd_data.plotting.overview import plot_shot_overview
 from lhd_data.plotting.signals import (
     resolve_density_signal,
@@ -193,3 +195,90 @@ def test_plot_shot_overview_accepts_preloaded_datasets_and_time_window():
     np.testing.assert_allclose(axes[1].lines[0].get_xdata(), [1.0])
     assert len(axes[1].lines) == 1
     assert axes[3].lines[0].get_label() == "ha2 3-O(H)"
+
+    legends = [legend for ax in axes for legend in [ax.get_legend()] if legend is not None]
+    assert legends
+    assert all(legend._ncols >= 1 for legend in legends)
+
+
+def test_shot_grid_shape_defaults_to_compact_seven_column_map():
+    assert shot_grid_shape(48) == (7, 7)
+    assert shot_grid_shape(48, columns=8) == (6, 8)
+
+
+def test_plot_fundamental_map_accepts_preloaded_datasets():
+    import matplotlib
+
+    matplotlib.use("Agg")
+
+    time = np.array([0.0, 1.0, 2.0])
+    datasets_by_shot = {
+        193788: {
+            "nbpwr_tot_temporal": xr.Dataset(
+                {
+                    "Port-Through_NB1": ("time", [1.0, 2.0, 3.0]),
+                    "Port-Through_NB2": ("time", [0.5, 1.0, 1.5]),
+                },
+                coords={"time": time},
+            ),
+            "fircall": xr.Dataset(
+                {"ne_bar(3669)": ("Time", [0.5, 0.7, 0.9])},
+                coords={"Time": time},
+            ),
+            "thomson": xr.Dataset(
+                {
+                    "Te": (
+                        ("Time", "R"),
+                        [[1000.0, 2000.0], [3000.0, 4000.0], [5000.0, 6000.0]],
+                    )
+                },
+                coords={"Time": time, "R": [3.0, 4.0]},
+            ),
+            "ha2": xr.Dataset({"3-O(H)": ("Time", [0.4, 0.5, 0.6])}, coords={"Time": time}),
+        },
+        193789: {
+            "nbpwr_tot_temporal": xr.Dataset(
+                {"Port-Through_NB1": ("time", [2.0, 3.0, 4.0])},
+                coords={"time": time},
+            ),
+        },
+    }
+
+    fig, axes = plot_fundamental_map(
+        [193788, 193789],
+        datasets_by_shot=datasets_by_shot,
+        tmin=0.0,
+        tmax=2.0,
+        time_bins=12,
+        signals=("nbi", "ne", "te", "halpha"),
+    )
+
+    assert len(axes) == 7
+    assert fig.lhd_shots == [193788, 193789]
+    assert axes[0].images[0].get_array().shape == (4, 12)
+    assert axes[0].axison is False
+
+
+def test_plot_fundamental_map_accepts_explicit_signal_specs():
+    import matplotlib
+
+    matplotlib.use("Agg")
+
+    datasets_by_shot = {
+        1: {
+            "custom": xr.Dataset(
+                {"signal": ("Time", [1.0, 2.0, 3.0])},
+                coords={"Time": [0.0, 1.0, 2.0]},
+            )
+        }
+    }
+
+    fig, axes = plot_fundamental_map(
+        [1],
+        datasets_by_shot=datasets_by_shot,
+        signals=(FundamentalSignalSpec("custom", diagnostic="custom", variable="signal"),),
+        time_bins=6,
+    )
+
+    assert fig.lhd_signal_specs[0].diagnostic == "custom"
+    assert axes[0].images[0].get_array().shape == (1, 6)

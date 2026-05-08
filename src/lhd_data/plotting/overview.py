@@ -93,17 +93,12 @@ def plot_shot_overview(
         )
         loaded.update(loaded_missing)
 
-    fig, axes = plt.subplots(
-        4,
-        1,
-        figsize=figsize,
-        sharex=True,
-        constrained_layout=True,
-    )
+    fig, axes = plt.subplots(4, 1, figsize=figsize, sharex=True)
+    fig.subplots_adjust(left=0.12, right=0.88, top=0.92, bottom=0.07, hspace=0.34)
     ax_power, ax_nbi, ax_density, ax_halpha = axes
 
     _plot_power_panel(ax_power, loaded, tmin=tmin, tmax=tmax)
-    ax_power.set_title(f"LHD shot {int(shot)} overview")
+    ax_power.set_title(f"LHD shot {int(shot)} overview", pad=18)
 
     _plot_nbi_panel(
         ax_nbi,
@@ -235,7 +230,7 @@ def _plot_nbi_panel(
     if not plotted:
         _add_fallback_text(ax, "NBI data unavailable")
     elif len(ax.lines) > 0:
-        ax.legend(loc="upper right", ncols=min(3, len(ax.lines)), fontsize=8)
+        _add_top_legend(ax, ncols=len(ax.lines))
 
 
 def _plot_halpha_panel(
@@ -260,7 +255,7 @@ def _plot_halpha_panel(
     if not plotted:
         _add_fallback_text(ax, "Balmer data unavailable")
     elif len(ax.lines) > 0:
-        ax.legend(loc="upper right", ncols=3, fontsize=7)
+        _add_top_legend(ax, ncols=len(ax.lines), fontsize=7)
 
 
 def _plot_signal(
@@ -288,8 +283,6 @@ def _plot_signal(
     time, values = reduce_to_time_series(data, method=signal.reduction)
     time, values = _crop_time_range(time, values, tmin=tmin, tmax=tmax)
     ax.plot(time, values, label=signal.label or signal.variable, **plot_kwargs)
-    if fallback_text and len(ax.lines) > 0:
-        ax.legend(loc="upper right", fontsize=8)
     return True
 
 
@@ -308,7 +301,35 @@ def _add_combined_legend(ax_left, ax_right) -> None:
     handles = [*ax_left.lines, *ax_right.lines]
     labels = [line.get_label() for line in handles]
     if handles:
-        ax_left.legend(handles, labels, loc="upper right", fontsize=8)
+        _add_top_legend(ax_left, handles=handles, labels=labels)
+
+
+def _add_top_legend(
+    ax,
+    *,
+    handles=None,
+    labels=None,
+    ncols: int | None = None,
+    fontsize: float = 8,
+) -> None:
+    handles = list(handles if handles is not None else ax.lines)
+    labels = list(labels if labels is not None else [line.get_label() for line in handles])
+    if not handles:
+        return
+
+    ax.legend(
+        handles,
+        labels,
+        loc="lower center",
+        bbox_to_anchor=(0.5, 1.01),
+        ncols=ncols or len(handles),
+        fontsize=fontsize,
+        frameon=False,
+        borderaxespad=0.0,
+        handlelength=1.6,
+        handletextpad=0.45,
+        columnspacing=0.9,
+    )
 
 
 def _crop_time_range(
