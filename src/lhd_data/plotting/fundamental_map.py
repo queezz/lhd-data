@@ -39,6 +39,8 @@ def plot_fundamental_map(
     y_normalization: YNormalization = "row",
     dark: bool = False,
     show_shot: bool = True,
+    tile_border: bool = True,
+    tile_background: bool = True,
 ):
     """Plot overview-style diagnostic traces as compact tiled shot sparklines.
 
@@ -46,6 +48,13 @@ def plot_fundamental_map(
     stored/radiated power, NBI power, density/temperature, and H-alpha. Axes,
     labels, legends, and tick marks are removed so the result reads as a dense
     map of discharge behavior rather than a detailed per-shot figure.
+
+    Parameters
+    ----------
+    tile_border : bool, default True
+        Show a subtle border around each shot tile for visual separation.
+    tile_background : bool, default True
+        Apply a subtle background tint to each shot tile.
     """
 
     import matplotlib.pyplot as plt
@@ -71,14 +80,30 @@ def plot_fundamental_map(
     facecolor = "black" if dark else "white"
     title_color = "white" if dark else "black"
     fig = plt.figure(figsize=figsize, facecolor=facecolor)
-    outer = fig.add_gridspec(rows, cols, wspace=0.08, hspace=0.2)
+    outer = fig.add_gridspec(rows, cols, wspace=0.08, hspace=0.14)
 
     axes_by_shot: list[list] = []
     all_axes: list = []
     twin_axes_by_row: dict[int, list] = {0: [], 2: []}
+    frame_axes: list = []
+
+    border_color = "0.65" if not dark else "0.4"
+    bg_color = "#f8f8f8" if not dark else "#1a1a1a"
 
     for index, shot in enumerate(shot_list):
         row, col = divmod(index, cols)
+
+        if tile_border or tile_background:
+            frame_ax = fig.add_subplot(outer[row, col])
+            _style_tile_frame(
+                frame_ax,
+                border=tile_border,
+                background=tile_background,
+                border_color=border_color,
+                bg_color=bg_color,
+            )
+            frame_axes.append(frame_ax)
+
         tile = GridSpecFromSubplotSpec(4, 1, subplot_spec=outer[row, col], hspace=0.03)
         axes = [fig.add_subplot(tile[row_index, 0]) for row_index in range(4)]
         axes_by_shot.append(axes)
@@ -131,15 +156,16 @@ def plot_fundamental_map(
 
     for shot_index, axes in enumerate(axes_by_shot):
         for ax in axes:
-            _strip_mini_axis(ax, dark=dark)
+            _strip_mini_axis(ax, dark=dark, transparent=tile_background)
         for ax in (twin_axes_by_row[0][shot_index], twin_axes_by_row[2][shot_index]):
-            _strip_mini_axis(ax, dark=dark)
+            _strip_mini_axis(ax, dark=dark, transparent=tile_background)
 
     fig.lhd_shots = shot_list
     fig.lhd_datasets = loaded_by_shot
     fig.lhd_errors = errors_by_shot
     fig.lhd_axes = np.asarray(axes_by_shot, dtype=object)
     fig.lhd_twin_axes = twin_axes_by_row
+    fig.lhd_frame_axes = frame_axes
     return fig, fig.lhd_axes
 
 
@@ -239,8 +265,11 @@ def _data_limits(axes: Sequence, *, axis: Literal["x", "y"]) -> tuple[float | No
     return low, high
 
 
-def _strip_mini_axis(ax, *, dark: bool) -> None:
-    ax.set_facecolor("black" if dark else "white")
+def _strip_mini_axis(ax, *, dark: bool, transparent: bool = False) -> None:
+    if transparent:
+        ax.set_facecolor("none")
+    else:
+        ax.set_facecolor("black" if dark else "white")
     ax.set_xlabel("")
     ax.set_ylabel("")
     ax.set_xticks([])
@@ -262,3 +291,40 @@ def _strip_mini_axis(ax, *, dark: bool) -> None:
         labelright=False,
         labelbottom=False,
     )
+
+
+def _style_tile_frame(
+    ax,
+    *,
+    border: bool,
+    background: bool,
+    border_color: str,
+    bg_color: str,
+) -> None:
+    """Style a tile frame axis with subtle border and/or background."""
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.tick_params(
+        left=False,
+        right=False,
+        bottom=False,
+        top=False,
+        labelleft=False,
+        labelright=False,
+        labelbottom=False,
+    )
+
+    if background:
+        ax.set_facecolor(bg_color)
+    else:
+        ax.set_facecolor("none")
+
+    for spine in ax.spines.values():
+        if border:
+            spine.set_visible(True)
+            spine.set_linewidth(0.5)
+            spine.set_color(border_color)
+        else:
+            spine.set_visible(False)
+
+    ax.set_zorder(-1)
