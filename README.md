@@ -97,7 +97,7 @@ ds = load_cached_diag("thomson", 193772)
 shot_data = load_cached_shot(193772)
 ```
 
-Create a compact fundamental-diagnostics map from cached shots:
+Create a compact fundamental-diagnostics trace map from cached shots:
 
 ```python
 from lhd_data.plotting import plot_fundamental_map

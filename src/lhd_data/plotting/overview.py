@@ -40,6 +40,7 @@ def plot_shot_overview(
     show_nbi: Iterable[int] | None = (1, 2, 3),
     halpha_mode: str = "default",
     te_ylim: tuple[float, float] | None = None,
+    show_legends: bool = True,
 ):
     """Plot a compact four-panel overview for one cached LHD shot.
 
@@ -75,6 +76,8 @@ def plot_shot_overview(
         plots all resolved Balmer channels.
     te_ylim:
         Optional manual y-axis limits for the Thomson ``Te`` twin axis.
+    show_legends:
+        Place compact horizontal legends above panels.
     """
 
     import matplotlib.pyplot as plt
@@ -97,7 +100,7 @@ def plot_shot_overview(
     fig.subplots_adjust(left=0.12, right=0.88, top=0.92, bottom=0.07, hspace=0.34)
     ax_power, ax_nbi, ax_density, ax_halpha = axes
 
-    _plot_power_panel(ax_power, loaded, tmin=tmin, tmax=tmax)
+    _plot_power_panel(ax_power, loaded, tmin=tmin, tmax=tmax, show_legend=show_legends)
     ax_power.set_title(f"LHD shot {int(shot)} overview", pad=18)
 
     _plot_nbi_panel(
@@ -106,49 +109,30 @@ def plot_shot_overview(
         show_nbi=show_nbi,
         tmin=tmin,
         tmax=tmax,
+        show_legend=show_legends,
     )
     ax_nbi.set_ylabel("P [MW]")
 
-    density_signal = resolve_density_signal(loaded.get(density_diag), diagnostic=density_diag)
-    _plot_signal(
+    ax_te = _plot_density_temperature_panel(
         ax_density,
         loaded,
-        density_signal,
-        fallback_text="Density data unavailable",
-        color="black",
-        linewidth=1.4,
+        density_diag=density_diag,
+        te_diag=te_diag,
+        thomson_reduction=thomson_reduction,
         tmin=tmin,
         tmax=tmax,
+        te_ylim=te_ylim,
+        show_legend=show_legends,
     )
-    ax_density.set_ylabel(r"$n_e$ [$10^{19}m^{-3}$]")
-    ax_te = ax_density.twinx()
-    te_signal = resolve_te_signal(loaded.get(te_diag), diagnostic=te_diag)
-    if te_signal is not None:
-        te_signal = ResolvedSignal(
-            diagnostic=te_signal.diagnostic,
-            variable=te_signal.variable,
-            label=te_signal.label,
-            kind=te_signal.kind,
-            reduction=thomson_reduction,
-        )
-    _plot_signal(
-        ax_te,
-        loaded,
-        te_signal,
-        color="C3",
-        linestyle="--",
-        linewidth=1.3,
-        tmin=tmin,
-        tmax=tmax,
-    )
-    ax_te.set_ylabel(r"$T_e$ [keV]")
-    ax_te.yaxis.label.set_color("C3")
-    ax_te.tick_params(axis="y", colors="C3")
-    if te_ylim is not None:
-        ax_te.set_ylim(te_ylim)
-    _add_combined_legend(ax_density, ax_te)
 
-    _plot_halpha_panel(ax_halpha, loaded, mode=halpha_mode, tmin=tmin, tmax=tmax)
+    _plot_halpha_panel(
+        ax_halpha,
+        loaded,
+        mode=halpha_mode,
+        tmin=tmin,
+        tmax=tmax,
+        show_legend=show_legends,
+    )
     ax_halpha.set_ylabel("Emission")
     ax_halpha.set_xlabel("time [s]")
 
@@ -174,7 +158,8 @@ def _plot_power_panel(
     *,
     tmin: float | None = None,
     tmax: float | None = None,
-) -> None:
+    show_legend: bool = True,
+):
     rad_signal = resolve_radiated_power_signal(datasets.get("bolo"))
     wp_signal = resolve_stored_power_signal(datasets.get("wp"))
 
@@ -206,8 +191,9 @@ def _plot_power_panel(
 
     if not plotted_rad and not plotted_wp:
         _add_fallback_text(ax, "Stored/radiated power unavailable")
-    else:
+    elif show_legend:
         _add_combined_legend(ax, ax_wp)
+    return ax_wp
 
 
 def _plot_nbi_panel(
@@ -217,6 +203,7 @@ def _plot_nbi_panel(
     show_nbi: Iterable[int] | None = (1, 2, 3),
     tmin: float | None = None,
     tmax: float | None = None,
+    show_legend: bool = True,
 ) -> None:
     plotted = False
     for signal in resolve_nbi_signals(dataset, show_nbi=show_nbi):
@@ -229,8 +216,63 @@ def _plot_nbi_panel(
         )
     if not plotted:
         _add_fallback_text(ax, "NBI data unavailable")
-    elif len(ax.lines) > 0:
+    elif show_legend and len(ax.lines) > 0:
         _add_top_legend(ax, ncols=len(ax.lines))
+
+
+def _plot_density_temperature_panel(
+    ax,
+    datasets: Mapping[str, xr.Dataset],
+    *,
+    density_diag: str = "fircall",
+    te_diag: str = "thomson",
+    thomson_reduction: str = "central",
+    tmin: float | None = None,
+    tmax: float | None = None,
+    te_ylim: tuple[float, float] | None = None,
+    show_legend: bool = True,
+):
+    density_signal = resolve_density_signal(datasets.get(density_diag), diagnostic=density_diag)
+    _plot_signal(
+        ax,
+        datasets,
+        density_signal,
+        fallback_text="Density data unavailable",
+        color="black",
+        linewidth=1.4,
+        tmin=tmin,
+        tmax=tmax,
+    )
+    ax.set_ylabel(r"$n_e$ [$10^{19}m^{-3}$]")
+
+    ax_te = ax.twinx()
+    te_signal = resolve_te_signal(datasets.get(te_diag), diagnostic=te_diag)
+    if te_signal is not None:
+        te_signal = ResolvedSignal(
+            diagnostic=te_signal.diagnostic,
+            variable=te_signal.variable,
+            label=te_signal.label,
+            kind=te_signal.kind,
+            reduction=thomson_reduction,
+        )
+    _plot_signal(
+        ax_te,
+        datasets,
+        te_signal,
+        color="C3",
+        linestyle="--",
+        linewidth=1.3,
+        tmin=tmin,
+        tmax=tmax,
+    )
+    ax_te.set_ylabel(r"$T_e$ [keV]")
+    ax_te.yaxis.label.set_color("C3")
+    ax_te.tick_params(axis="y", colors="C3")
+    if te_ylim is not None:
+        ax_te.set_ylim(te_ylim)
+    if show_legend:
+        _add_combined_legend(ax, ax_te)
+    return ax_te
 
 
 def _plot_halpha_panel(
@@ -240,6 +282,7 @@ def _plot_halpha_panel(
     mode: str = "default",
     tmin: float | None = None,
     tmax: float | None = None,
+    show_legend: bool = True,
 ) -> None:
     plotted = False
     for signal in resolve_halpha_signals(dict(datasets), mode=mode):
@@ -254,7 +297,7 @@ def _plot_halpha_panel(
         )
     if not plotted:
         _add_fallback_text(ax, "Balmer data unavailable")
-    elif len(ax.lines) > 0:
+    elif show_legend and len(ax.lines) > 0:
         _add_top_legend(ax, ncols=len(ax.lines), fontsize=7)
 
 

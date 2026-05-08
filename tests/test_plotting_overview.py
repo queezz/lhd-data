@@ -3,7 +3,7 @@ import xarray as xr
 
 from lhd_data.describe import describe_dataarray, describe_dataset, describe_many
 from lhd_data.plotting.helpers import reduce_to_time_series, summarize_datasets, time_axis_seconds
-from lhd_data.plotting.fundamental_map import FundamentalSignalSpec, plot_fundamental_map
+from lhd_data.plotting.fundamental_map import plot_fundamental_map
 from lhd_data.plotting.grid import shot_grid_shape
 from lhd_data.plotting.overview import plot_shot_overview
 from lhd_data.plotting.signals import (
@@ -214,6 +214,14 @@ def test_plot_fundamental_map_accepts_preloaded_datasets():
     time = np.array([0.0, 1.0, 2.0])
     datasets_by_shot = {
         193788: {
+            "wp": xr.Dataset(
+                {"Wp": ("Time", [1000.0, 2000.0, 3000.0])},
+                coords={"Time": time},
+            ),
+            "bolo": xr.Dataset(
+                {"Rad_PW": ("Time", [1000.0, 2000.0, 3000.0])},
+                coords={"Time": time},
+            ),
             "nbpwr_tot_temporal": xr.Dataset(
                 {
                     "Port-Through_NB1": ("time", [1.0, 2.0, 3.0]),
@@ -237,6 +245,10 @@ def test_plot_fundamental_map_accepts_preloaded_datasets():
             "ha2": xr.Dataset({"3-O(H)": ("Time", [0.4, 0.5, 0.6])}, coords={"Time": time}),
         },
         193789: {
+            "wp": xr.Dataset(
+                {"Wp": ("Time", [1500.0, 2500.0, 3500.0])},
+                coords={"Time": time},
+            ),
             "nbpwr_tot_temporal": xr.Dataset(
                 {"Port-Through_NB1": ("time", [2.0, 3.0, 4.0])},
                 coords={"time": time},
@@ -249,36 +261,16 @@ def test_plot_fundamental_map_accepts_preloaded_datasets():
         datasets_by_shot=datasets_by_shot,
         tmin=0.0,
         tmax=2.0,
-        time_bins=12,
-        signals=("nbi", "ne", "te", "halpha"),
     )
 
-    assert len(axes) == 7
+    assert axes.shape == (2, 4)
     assert fig.lhd_shots == [193788, 193789]
-    assert axes[0].images[0].get_array().shape == (4, 12)
-    assert axes[0].axison is False
-
-
-def test_plot_fundamental_map_accepts_explicit_signal_specs():
-    import matplotlib
-
-    matplotlib.use("Agg")
-
-    datasets_by_shot = {
-        1: {
-            "custom": xr.Dataset(
-                {"signal": ("Time", [1.0, 2.0, 3.0])},
-                coords={"Time": [0.0, 1.0, 2.0]},
-            )
-        }
-    }
-
-    fig, axes = plot_fundamental_map(
-        [1],
-        datasets_by_shot=datasets_by_shot,
-        signals=(FundamentalSignalSpec("custom", diagnostic="custom", variable="signal"),),
-        time_bins=6,
-    )
-
-    assert fig.lhd_signal_specs[0].diagnostic == "custom"
-    assert axes[0].images[0].get_array().shape == (1, 6)
+    assert len(axes[0, 0].lines) == 1
+    assert len(fig.lhd_twin_axes[0][0].lines) == 1
+    assert len(axes[0, 1].lines) == 2
+    assert len(axes[0, 2].lines) == 1
+    assert len(axes[0, 3].lines) == 1
+    assert axes[0, 0].get_xticks().size == 0
+    assert axes[0, 0].get_legend() is None
+    assert not axes[0, 0].spines["left"].get_visible()
+    assert axes[0, 0].get_xlim() == (0.0, 2.0)
